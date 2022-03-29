@@ -62,7 +62,7 @@ def filter_spending(sector=False, keywords=False, date_min=False, date_max=False
 
     return(lob_lobbying)
 
-def format_graph_data(lob_df):
+def format_graph_data(lob_df, minAmount):
     """
     Given a pandas dataframe of cleaned/filtered lobbying data (returned from filter_spending), returns data formatted for graph diagram
     """
@@ -70,7 +70,7 @@ def format_graph_data(lob_df):
     lob_lobbying_group = lob_df[['Ultorg', 'Amount']].groupby(by='Ultorg', as_index=False).agg({'Amount': np.sum})
     
     #FIXME Minimum amount of money to be considered
-    big_lobby = lob_lobbying_group[lob_lobbying_group['Amount'] >= 0]
+    big_lobby = lob_lobbying_group[lob_lobbying_group['Amount'] >= minAmount]
 
     filtered_lobbying = lob_df[lob_df['Ultorg'].isin(big_lobby['Ultorg'].tolist())]
 
@@ -105,6 +105,6 @@ def format_graph_data(lob_df):
 
 ######## EXAMPLE CALL ##########
 
-lob_df = filter_spending(sector='Defense', date_min=2017, date_max=2020)
-graph_df = format_graph_data(lob_df)
-print(graph_df)
+#lob_df = filter_spending(sector='Defense', date_min=2017, date_max=2020)
+#graph_df = format_graph_data(lob_df, 1000)
+#print(graph_df)
