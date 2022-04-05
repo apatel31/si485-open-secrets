@@ -62,7 +62,7 @@ def filter_spending(sector=False, keywords=False, date_min=False, date_max=False
 
     return(lob_lobbying)
 
-def format_graph_data(lob_df, minAmount):
+def format_graph_data(lob_df, minAmount, commonBills):
     """
     Given a pandas dataframe of cleaned/filtered lobbying data (returned from filter_spending), returns data formatted for graph diagram
     """
@@ -89,7 +89,7 @@ def format_graph_data(lob_df, minAmount):
             weight = len([w for w in org_issue_dict[org_issue] if w in org_issue_dict[org]])
             
             # FIXME number of bills in common
-            weight -= 20
+            weight -= commonBills
 
             if weight > 0:
                 source_amount = lob_lobbying_group[lob_lobbying_group['Ultorg'] == org]
