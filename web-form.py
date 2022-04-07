@@ -26,7 +26,8 @@ with st.form("graphForm", clear_on_submit=False):
        'Labor', 'Transportation', 'Unknown', 'Joint Candidate Cmtes',
        'Party Cmte', 'Candidate', 'Non-contribution'
     ), index=0)
-    dollarThreshold = st.slider("$ Threshold for Relevance", 0, 1000000, 10000)
+    keywords = st.text_input("Type Keywords Here")
+    dollarThreshold = st.slider("$ Threshold for Relevance", 0, 100000, 10000)
     commonBills = st.number_input('Number of bills in common', value=1)
     submit = st.form_submit_button("Submit")
 
@@ -52,8 +53,8 @@ if industryOrTopic == 'None':
 # Create network graph when user selects a sector
 else:
    # Code for filtering dataframe and generating network
-    lob_df = filter_spending(sector=industryOrTopic, date_min=dateRange[0], date_max=dateRange[1])
-    graph_df = format_graph_data(lob_df)
+    lob_df = filter_spending(sector=industryOrTopic, keywords=keywords, date_min=dateRange[0], date_max=dateRange[1])
+    graph_df = format_graph_data(lob_df, minAmount=dollarThreshold, commonBills=commonBills)
     # st.write(graph_df.to_string())
     lobby_net = Network(height='750px', width='100%', bgcolor='white', font_color='black')
     G = nx.from_pandas_edgelist(graph_df, 'source', 'dest', 'weight')
@@ -78,5 +79,8 @@ else:
     components.html(HtmlFile.read(), height=435)
 
 # to do:
+# how to host this online
 # loading widget while graph is being generated?
+# show message if nothing in graph?
+# fix number of bills in common filter => make sure it works
 
