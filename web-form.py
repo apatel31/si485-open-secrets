@@ -81,6 +81,23 @@ else:
     st.success('Done!')
     components.html(HtmlFile.read(), height=435)
 
+    # Load KPIs and Dashboard with Visuals
+
+    st.subheader('Graph Characteristics')
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Density", round(nx.density(G),2))
+    col2.metric("Number of Nodes", nx.number_of_nodes(G))
+    col3.metric("Number of Edges", nx.number_of_edges(G))
+
+    degree_freq_data = pd.DataFrame(
+     nx.degree_histogram(G),
+     columns=["Frequency of Degree Values"])
+
+    st.bar_chart(degree_freq_data)
+
+    # Form exportable data
+
     df_list = []
 
     for topic in analysisTopics:
@@ -109,6 +126,7 @@ else:
     def callback():
         st.balloons()
 
+    st.dataframe(df_final)
     st.download_button(
         label="Download analysis data as CSV",
         data=csv,
