@@ -51,34 +51,32 @@ if industryOrTopic == 'None':
    st.text('Select a Sector to Get Started')
 # Create network graph when user selects a sector
 else:
-    with st.spinner('Wait for it...'):
     # Code for filtering dataframe and generating network
-        lob_df = filter_spending(sectors=industryOrTopic, keywords=listOfKeywords, date_min=dateRange[0], date_max=dateRange[1])
-        graph_df = format_graph_data(lob_df, minAmount=dollarThreshold, commonBills=commonBills)
-        # st.write(graph_df.to_string())
-        lobby_net = Network(height='1000px', width='100%', bgcolor='black', font_color='white')
-        G = nx.from_pandas_edgelist(graph_df, 'source', 'dest', 'weight')
-        lobby_net.from_nx(G)
-        # Generate network with specific layout settings
-        lobby_net.repulsion(node_distance=420, central_gravity=0.33,
-                        spring_length=110, spring_strength=0.10,
-                        damping=0.95)
-        # Save and read graph as HTML file (on Streamlit Sharing)
-        try:
-            path = '/tmp'
-            lobby_net.save_graph(f'{path}/pyvis_graph.html')
-            HtmlFile = open(f'{path}/pyvis_graph.html', 'r', encoding='utf-8')
+    lob_df = filter_spending(sectors=industryOrTopic, keywords=listOfKeywords, date_min=dateRange[0], date_max=dateRange[1])
+    graph_df = format_graph_data(lob_df, minAmount=dollarThreshold, commonBills=commonBills)
+    # st.write(graph_df.to_string())
+    lobby_net = Network(height='1000px', width='100%', bgcolor='black', font_color='white')
+    G = nx.from_pandas_edgelist(graph_df, 'source', 'dest', 'weight')
+    lobby_net.from_nx(G)
+    # Generate network with specific layout settings
+    lobby_net.repulsion(node_distance=420, central_gravity=0.33,
+                    spring_length=110, spring_strength=0.10,
+                    damping=0.95)
+    # Save and read graph as HTML file (on Streamlit Sharing)
+    try:
+        path = '/tmp'
+        lobby_net.save_graph(f'{path}/pyvis_graph.html')
+        HtmlFile = open(f'{path}/pyvis_graph.html', 'r', encoding='utf-8')
 
-        # Save and read graph as HTML file (locally)
-        except:
-            path = './html_files'
-            lobby_net.save_graph(f'{path}/pyvis_graph.html')
-            HtmlFile = open(f'{path}/pyvis_graph.html', 'r', encoding='utf-8')
-            
+    # Save and read graph as HTML file (locally)
+    except:
+        path = './html_files'
+        lobby_net.save_graph(f'{path}/pyvis_graph.html')
+        HtmlFile = open(f'{path}/pyvis_graph.html', 'r', encoding='utf-8')
+        
 
 
     # Load HTML file in HTML component for display on Streamlit page
-    st.success('Done!')
     components.html(HtmlFile.read(), height=435)
 
     # Load KPIs and Dashboard with Visuals
