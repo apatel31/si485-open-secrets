@@ -1,7 +1,12 @@
-from pyvis.network import Network
+# import sys
+# sys.path.append('/opt/homebrew/lib/python3.9/site-packages')
+# sys.executable
+from pyvis import Network
+import networkx as nx
 import pandas as pd
 
-lobby_net = Network(height='750px', width='100%', bgcolor='white', font_color='black')
+
+lobby_net = Network(height='750px', width='100%', bgcolor='black', font_color='white')
 
 # set the physics layout of the network
 lobby_net.barnes_hut()
@@ -33,3 +38,5 @@ for node in lobby_net.nodes:
 
 lobby_net.show_buttons(filter_=['physics'])
 lobby_net.show('lobbying_network_sample.html')
+
+network_info = nx.info(lobby_net)
