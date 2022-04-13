@@ -8,7 +8,7 @@ import numpy as np
        'Labor', 'Transportation', 'Unknown', 'Joint Candidate Cmtes',
        'Party Cmte', 'Candidate', 'Non-contribution']"""
 
-def filter_spending(sector=False, keywords=False, date_min=False, date_max=False):
+def filter_spending(sectors=False, keywords=False, date_min=False, date_max=False):
     """
     Given optional filter parameters, load and filter data to run through graph function.
 
@@ -35,12 +35,12 @@ def filter_spending(sector=False, keywords=False, date_min=False, date_max=False
     lob_lobbying = lob_lobbying.merge(issue_notna, 'left', on='Uniqid').drop('Year_y', axis=1).rename(columns={'Year_x': 'Year'})
     
     # if sector filter passed by user
-    if sector:
+    if sectors:
         # join in sector
         industries = pd.read_csv('./Data/CRP_Categories.txt', sep='\t')
         lob_lobbying = lob_lobbying.merge(industries, 'left', on='Catcode')
         # include only selected sector
-        lob_lobbying = lob_lobbying.loc[lob_lobbying['Sector'] == sector]
+        lob_lobbying = lob_lobbying.loc[lob_lobbying['Sector'].isin(sectors)]
 
     # if date filter is passed by user
     if date_min:

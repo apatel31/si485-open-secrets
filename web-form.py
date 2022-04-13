@@ -19,13 +19,13 @@ with st.form("graphForm", clear_on_submit=False):
     todays_date = date.today()
     dateRange = st.slider("Time Range", min_value=1985, max_value=todays_date.year, value=(2010,2015))
     # find the earliest year in the dataframe and replace 1985 with it. 
-    industryOrTopic = st.selectbox("Chosen Sector", (
-        'None','Agribusiness', 'Construction', 'Communic/Electronics', 'Defense',
+    industryOrTopic = st.multiselect("Chosen Sectors", [
+        'Agribusiness', 'Construction', 'Communic/Electronics', 'Defense',
        'Energy/Nat Resource', 'Finance/Insur/RealEst', 'Misc Business',
        'Health', 'Other', 'Ideology/Single-Issue', 'Lawyers & Lobbyists',
        'Labor', 'Transportation', 'Unknown', 'Joint Candidate Cmtes',
        'Party Cmte', 'Candidate', 'Non-contribution'
-    ), index=0)
+    ], None)
     keywords = st.text_input("Type Keywords Here (separated by spaces)")
     listOfKeywords = []
     if keywords:
@@ -51,7 +51,7 @@ if industryOrTopic == 'None':
 # Create network graph when user selects a sector
 else:
    # Code for filtering dataframe and generating network
-    lob_df = filter_spending(sector=industryOrTopic, keywords=listOfKeywords, date_min=dateRange[0], date_max=dateRange[1])
+    lob_df = filter_spending(sectors=industryOrTopic, keywords=listOfKeywords, date_min=dateRange[0], date_max=dateRange[1])
     graph_df = format_graph_data(lob_df, minAmount=dollarThreshold, commonBills=commonBills)
     # st.write(graph_df.to_string())
     lobby_net = Network(height='750px', width='100%', bgcolor='white', font_color='black')
