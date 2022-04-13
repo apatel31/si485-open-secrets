@@ -1,3 +1,4 @@
+from re import sub
 import streamlit as st
 import datetime as datetime
 import json
@@ -50,7 +51,7 @@ with st.form("graphForm", clear_on_submit=False):
 if industryOrTopic == 'None':
    st.text('Select a Sector to Get Started')
 # Create network graph when user selects a sector
-else:
+if submit:
     # Code for filtering dataframe and generating network
     lob_df = filter_spending(sectors=industryOrTopic, keywords=listOfKeywords, date_min=dateRange[0], date_max=dateRange[1])
     graph_df = format_graph_data(lob_df, minAmount=dollarThreshold, commonBills=commonBills)
