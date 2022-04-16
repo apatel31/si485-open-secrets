@@ -10,10 +10,14 @@ import networkx as nx
 from pyvis.network import Network
 import streamlit.components.v1 as components
 from functools import reduce
+import plost
+import scipy as sp
 
-st.title("OpenSecrets Graph Analyzer Tool")
+st.set_page_config(layout="wide")
+
+st.title("OpenSecrets Graph Tool")
 st.subheader("Select what you want to look for")
-st.text('Description of how to use the tool here')
+st.text('Once you select filters and hit submit, there will be a graph generated where each node represents a lobbying organization and an edge represents the number of common bills lobbied for.')
 
 with st.form("graphForm", clear_on_submit=False):
     todays_date = date.today()
@@ -33,7 +37,7 @@ with st.form("graphForm", clear_on_submit=False):
     dollarThreshold = st.slider("$ Threshold for Relevance", 0, 1000000, 10000)
     commonBills = st.number_input('Number of bills in common', value=1, min_value=1)
     analysisTopics = st.multiselect("Choose Analysis Methods", (
-        'degree_centrality', 'eigenvector_centrality', 'closeness_centrality', 'betweenness_centrality'
+        'Average Neighbor Degree', 'Degree Centrality', 'Eigenvector Centrality', 'Closeness Centrality', 'PageRank'
     ))
     submit = st.form_submit_button("Submit")
 
@@ -85,34 +89,84 @@ with st.spinner('Wait for it...'):
 
         st.subheader('Graph Characteristics')
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric("Density", round(nx.density(G),2))
-        col2.metric("Number of Nodes", nx.number_of_nodes(G))
-        col3.metric("Number of Edges", nx.number_of_edges(G))
+        col2.metric("Clustering Coefficient", round(nx.average_clustering(G),2))
+        col3.metric("Number of Nodes", nx.number_of_nodes(G))
+        col4.metric("Number of Edges", nx.number_of_edges(G))
 
         degree_freq_data = pd.DataFrame(
         nx.degree_histogram(G),
         columns=["Frequency of Degree Values"])
 
-        st.bar_chart(degree_freq_data)
+        plost.hist(
+            data=degree_freq_data,
+            x='Frequency of Degree Values',
+            aggregate='count')
 
         # Form exportable data
 
         df_list = []
 
         for topic in analysisTopics:
-            if topic == 'degree_centrality':
+            if topic == 'Average Neighbor Degree':
+                degree_df = pd.DataFrame(nx.average_neighbor_degree(G).items(), columns=['Org', 'average_neighbor_degree'])
+                df_list.append(degree_df)
+
+                top_5_degree = degree_df.sort_values(by=['average_neighbor_degree'], ascending=False).head(5)
+
+                st.subheader("Top 5 Orgs by Average Neighbor Degree")
+                st.table(top_5_degree)
+                
+            if topic == 'Degree Centrality':
+
                 degree_centrality_df = pd.DataFrame(nx.degree_centrality(G).items(), columns=['Org', 'degree_centrality'])
                 df_list.append(degree_centrality_df)
-            if topic == 'eigenvector_centrality':
+
+                top_5_degree_centrality = degree_centrality_df.sort_values(by=['degree_centrality'], ascending=False).head(5)
+
+                st.subheader("Top 5 Orgs by Degree Centrality")
+                st.table(top_5_degree_centrality)
+
+            if topic == 'Eigenvector Centrality':
+
                 eigenvector_centrality_df = pd.DataFrame(nx.eigenvector_centrality(G).items(), columns=['Org', 'eigenvector_centrality'])
                 df_list.append(eigenvector_centrality_df)
-            if topic == 'closeness_centrality':
+
+                top_5_eigenvector_centrality = eigenvector_centrality_df.sort_values(by=['eigenvector_centrality'], ascending=False).head(5)
+
+                st.subheader("Top 5 Orgs by Eigenvector Centrality")
+                st.table(top_5_eigenvector_centrality)
+
+            if topic == 'Closeness Centrality':
+
                 closeness_centrality_df = pd.DataFrame(nx.closeness_centrality(G).items(), columns=['Org', 'closeness_centrality'])
                 df_list.append(closeness_centrality_df)
-            if topic == 'betweenness_centrality':
+
+                top_5_closeness_centrality = closeness_centrality_df.sort_values(by=['closeness_centrality'], ascending=False).head(5)
+
+                st.subheader("Top 5 Orgs by Closeness Centrality")
+                st.table(top_5_closeness_centrality)
+
+            if topic == 'Betweenness Centrality':
+
                 betweenness_centrality_df = pd.DataFrame(nx.betweenness_centrality(G).items(), columns=['Org', 'betweenness_centrality'])
                 df_list.append(betweenness_centrality_df)
+
+                top_5_betweenness_centrality = betweenness_centrality_df.sort_values(by=['betweenness_centrality'], ascending=False).head(5)
+
+                st.subheader("Top 5 Orgs by Betweenness Centrality")
+                st.table(top_5_betweenness_centrality)
+
+            if topic == 'PageRank':
+
+                pagerank_df = pd.DataFrame(nx.pagerank(G).items(), columns=['Org', 'pagerank'])
+                df_list.append(pagerank_df)
+
+                top_5_pagerank = pagerank_df.sort_values(by=['pagerank'], ascending=False).head(5)
+
+                st.subheader("Top 5 Orgs by PageRank")
+                st.table(top_5_pagerank)
 
         df_final = reduce(lambda left,right: pd.merge(left,right,on='Org'), df_list)
 
