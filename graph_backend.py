@@ -1,12 +1,25 @@
 import pandas as pd 
 import numpy as np
 
+import dropbox
+from contextlib import closing # this will correctly close the request
+import io
+
+# establish dropbox connection
+dbx = dropbox.Dropbox('sl.BF1dpMPKp7TseLMdUQgjw64sRa3QtUQM2lFrZELJaABmX1UzXQG9XdbY7l1cqxo8cq-iKDpI9ZiIozgUUH9mKgxox7u2XrLu-NZN-JVqxOyQ764nulMcCqgpU124HWaIWs9EjYA')
 ##### Sector Options #######
 """['Agribusiness', 'Construction', 'Communic/Electronics', 'Defense',
        'Energy/Nat Resource', 'Finance/Insur/RealEst', 'Misc Business',
        'Health', 'Other', 'Ideology/Single-Issue', 'Lawyers & Lobbyists',
        'Labor', 'Transportation', 'Unknown', 'Joint Candidate Cmtes',
        'Party Cmte', 'Candidate', 'Non-contribution']"""
+
+# helper function to read dropbox files
+def stream_dropbox_file(path):
+    _,res=dbx.files_download(path)
+    with closing(res) as result:
+        byte_data=result.content
+        return io.BytesIO(byte_data)
 
 def filter_spending(sectors=False, keywords=False, date_min=False, date_max=False):
     """
@@ -21,12 +34,12 @@ def filter_spending(sectors=False, keywords=False, date_min=False, date_max=Fals
 
 
     # load lobbying transactions data
-    lob_lobbying = pd.read_csv('./Data/Lobby/lob_lobbying.txt', names=['Uniqid', 'Registrant_raw','Registrant', 'Isfirm', 'Client_raw', 'Client', 'Ultorg', 'Amount', 'Catcode', 'Source', 'Self', 'IncludeNSFS', 'Use', 'Ind', 'Year', 'Type', 'Type_Long', 'Affiliate'], encoding='ISO-8859-1', low_memory=False)
+    lob_lobbying = pd.read_csv(stream_dropbox_file('/OpenSecretsData/lob_lobbying.txt'), names=['Uniqid', 'Registrant_raw','Registrant', 'Isfirm', 'Client_raw', 'Client', 'Ultorg', 'Amount', 'Catcode', 'Source', 'Self', 'IncludeNSFS', 'Use', 'Ind', 'Year', 'Type', 'Type_Long', 'Affiliate'], encoding='ISO-8859-1', low_memory=False)
     # only use rows marked as use (maybe only ind for unique payments?)
     lob_lobbying = lob_lobbying.loc[lob_lobbying['Ind'] == 'y', ['Uniqid', 'Registrant', 'Client', 'Ultorg', 'Amount', 'Catcode', 'Use', 'Ind', 'Year', 'Type']]
 
     # load issue data
-    lob_issue = pd.read_csv('./Data/Lobby/lob_issue.txt', names=['SI_ID', 'Uniqid','IssueID', 'Issue','SpecificIssue', 'Year'], encoding='ISO-8859-1')
+    lob_issue = pd.read_csv(stream_dropbox_file('/OpenSecretsData/lob_issue.txt'), names=['SI_ID', 'Uniqid','IssueID', 'Issue','SpecificIssue', 'Year'], encoding='ISO-8859-1')
     # drop issues without descriptions
     issue_notna = lob_issue.dropna(subset=["SpecificIssue"]).copy()
     # make lowercase for standard searching
@@ -37,7 +50,8 @@ def filter_spending(sectors=False, keywords=False, date_min=False, date_max=Fals
     # if sector filter passed by user
     if sectors:
         # join in sector
-        industries = pd.read_csv('./Data/CRP_Categories.txt', sep='\t')
+        industries = pd.read_csv(stream_dropbox_file('/OpenSecretsData/CRP_Categories.txt'), sep='\t')
+        
         lob_lobbying = lob_lobbying.merge(industries, 'left', on='Catcode')
         # include only selected sector
         lob_lobbying = lob_lobbying.loc[lob_lobbying['Sector'].isin(sectors)]
@@ -56,7 +70,7 @@ def filter_spending(sectors=False, keywords=False, date_min=False, date_max=Fals
         lob_lobbying = lob_lobbying_notna.loc[lob_lobbying_notna['SpecificIssue'].str.contains(regex, regex=True)]
         
     # load bills info data
-    lob_bills = pd.read_csv('./Data/Lobby/lob_bills.txt', names=['B_ID', 'SI_ID','CongNo', 'Bill_Name'])
+    lob_bills = pd.read_csv(stream_dropbox_file('/OpenSecretsData/lob_bills.txt'), names=['B_ID', 'SI_ID','CongNo', 'Bill_Name'])
     # join in bills
     lob_lobbying  = pd.merge(lob_lobbying, lob_bills, on='SI_ID', how='left')
 
