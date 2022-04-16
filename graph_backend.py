@@ -6,7 +6,7 @@ from contextlib import closing # this will correctly close the request
 import io
 
 # establish dropbox connection
-dbx = dropbox.Dropbox('sl.BF1dpMPKp7TseLMdUQgjw64sRa3QtUQM2lFrZELJaABmX1UzXQG9XdbY7l1cqxo8cq-iKDpI9ZiIozgUUH9mKgxox7u2XrLu-NZN-JVqxOyQ764nulMcCqgpU124HWaIWs9EjYA')
+dbx = dropbox.Dropbox('sl.BF3_ArVG9B5BJjsMdESYLtxs0mDWYFxG4metjhpjnArq4DFnkG966lMifPPNjKe2vC7oMchh2BpQsZSRgdoVZgt3u76oxvNNEdx6srzRYvTBoqVstTZtEdqZOAl-qETjy1TofCM')
 ##### Sector Options #######
 """['Agribusiness', 'Construction', 'Communic/Electronics', 'Defense',
        'Energy/Nat Resource', 'Finance/Insur/RealEst', 'Misc Business',
