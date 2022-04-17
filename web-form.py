@@ -89,15 +89,13 @@ with st.spinner('Wait for it...'):
 
         st.subheader('Graph Characteristics')
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric("Density", round(nx.density(G),2))
-        col2.metric("Number of Nodes", nx.number_of_nodes(G))
-        col3.metric("Number of Edges", nx.number_of_edges(G))
-
-        col1, col2 = st.columns(2)
-        col1.metric("Clustering Coefficient", round(nx.average_clustering(G),2))
+        col2.metric("Clustering Coefficient", round(nx.average_clustering(G),2))
+        col3.metric("Number of Nodes", nx.number_of_nodes(G))
+        col4.metric("Number of Edges", nx.number_of_edges(G))
         #col2.metric("Small World Coefficient", round(nx.sigma(G), 2))
-        col2.metric("Diameter", round(nx.diameter(G), 2))
+        #col2.metric("Diameter", round(nx.diameter(G), 2))
 
         # st.write(nx.voterank(G))
 

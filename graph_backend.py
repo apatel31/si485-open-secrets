@@ -4,6 +4,7 @@ import numpy as np
 import dropbox
 from contextlib import closing # this will correctly close the request
 import io
+import streamlit as st
 
 # establish dropbox connection
 dbx = dropbox.Dropbox('sl.BF3_ArVG9B5BJjsMdESYLtxs0mDWYFxG4metjhpjnArq4DFnkG966lMifPPNjKe2vC7oMchh2BpQsZSRgdoVZgt3u76oxvNNEdx6srzRYvTBoqVstTZtEdqZOAl-qETjy1TofCM')
@@ -21,6 +22,8 @@ def stream_dropbox_file(path):
         byte_data=result.content
         return io.BytesIO(byte_data)
 
+
+@st.cache
 def filter_spending(sectors=False, keywords=False, date_min=False, date_max=False):
     """
     Given optional filter parameters, load and filter data to run through graph function.
@@ -76,6 +79,7 @@ def filter_spending(sectors=False, keywords=False, date_min=False, date_max=Fals
 
     return(lob_lobbying)
 
+@st.cache
 def format_graph_data(lob_df, minAmount, commonBills):
     """
     Given a pandas dataframe of cleaned/filtered lobbying data (returned from filter_spending), returns data formatted for graph diagram
