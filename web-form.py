@@ -21,7 +21,7 @@ st.text('Once you select filters and hit submit, there will be a graph generated
 
 with st.form("graphForm", clear_on_submit=False):
     todays_date = date.today()
-    dateRange = st.slider("Time Range", min_value=1985, max_value=todays_date.year, value=(2010,2015))
+    dateRange = st.slider("Time Range", min_value=2010, max_value=todays_date.year, value=(2010,2015))
     # find the earliest year in the dataframe and replace 1985 with it. 
     industryOrTopic = st.multiselect("Chosen Sectors", [
         'Agribusiness', 'Construction', 'Communic/Electronics', 'Defense',
@@ -30,10 +30,10 @@ with st.form("graphForm", clear_on_submit=False):
        'Labor', 'Transportation', 'Unknown', 'Joint Candidate Cmtes',
        'Party Cmte', 'Candidate', 'Non-contribution'
     ], None)
-    keywords = st.text_input("Type Keywords Here (separated by spaces)")
-    listOfKeywords = []
-    if keywords:
-        listOfKeywords = keywords.split()
+    # keywords = st.text_input("Type Keywords Here (separated by spaces)")
+    # listOfKeywords = []
+    # if keywords:
+    #     listOfKeywords = keywords.split()
     dollarThreshold = st.slider("$ Threshold for Relevance", 0, 1000000, 10000)
     commonBills = st.number_input('Number of bills in common', value=1, min_value=1)
     analysisTopics = st.multiselect("Choose Analysis Methods", (
@@ -57,7 +57,7 @@ with st.spinner('Wait for it...'):
     # Create network graph when user selects a sector
     if submit:
         # Code for filtering dataframe and generating network
-        lob_df = filter_spending(sectors=industryOrTopic, keywords=listOfKeywords, date_min=dateRange[0], date_max=dateRange[1])
+        lob_df = filter_spending(sectors=industryOrTopic, keywords=None, date_min=dateRange[0], date_max=dateRange[1])
         graph_df = format_graph_data(lob_df, minAmount=dollarThreshold, commonBills=commonBills)
         # st.write(graph_df.to_string())
         lobby_net = Network(height='1000px', width='100%', bgcolor='black', font_color='white')
@@ -174,6 +174,16 @@ with st.spinner('Wait for it...'):
 
         df_final = reduce(lambda left,right: pd.merge(left,right,on='Org'), df_list)
 
+        if all(x in analysisTopics for x in ['PageRank','Degree Centrality']):
+            plost.xy_hist(
+                data=df_final,
+                x='pagerank',
+                y='degree_centrality',
+                x_bin=dict(maxbins=20),
+                y_bin=dict(maxbins=20),
+                height=400,
+            )
+        
         @st.cache
         def convert_df(df):
             # IMPORTANT: Cache the conversion to prevent computation on every rerun
@@ -183,6 +193,8 @@ with st.spinner('Wait for it...'):
 
         def callback():
             st.balloons()
+
+        st.subheader("Downloadable Network Analysis Data")
 
         st.dataframe(df_final)
         st.download_button(
