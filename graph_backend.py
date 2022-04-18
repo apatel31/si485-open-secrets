@@ -9,9 +9,9 @@ import csv
 from io import StringIO
 import time
 
-from sqlalchemy import create_engine
-from google.oauth2 import service_account
-from google.cloud import bigquery
+# from sqlalchemy import create_engine
+# from google.oauth2 import service_account
+# from google.cloud import bigquery
 
 ##### Sector Options #######
 """['Agribusiness', 'Construction', 'Communic/Electronics', 'Defense',
@@ -21,21 +21,21 @@ from google.cloud import bigquery
        'Party Cmte', 'Candidate', 'Non-contribution']"""
 
 
-# Create API client.
-credentials = service_account.Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"]
-)
-client = bigquery.Client(credentials=credentials)
+# # Create API client.
+# credentials = service_account.Credentials.from_service_account_info(
+#     st.secrets["gcp_service_account"]
+# )
+# client = bigquery.Client(credentials=credentials)
 
-# Perform query.
-# Uses st.experimental_memo to only rerun when the query changes or after 10 min.
-@st.experimental_memo(ttl=600)
-def run_query(query):
-    query_job = client.query(query)
-    rows_raw = query_job.result()
-    # Convert to list of dicts. Required for st.experimental_memo to hash the return value.
-    rows = [dict(row) for row in rows_raw]
-    return rows
+# # Perform query.
+# # Uses st.experimental_memo to only rerun when the query changes or after 10 min.
+# @st.experimental_memo(ttl=600)
+# def run_query(query):
+#     query_job = client.query(query)
+#     rows_raw = query_job.result()
+#     # Convert to list of dicts. Required for st.experimental_memo to hash the return value.
+#     rows = [dict(row) for row in rows_raw]
+#     return rows
 
 @st.cache
 def filter_spending(sectors=False, keywords=False, date_min=False, date_max=False):
@@ -48,12 +48,11 @@ def filter_spending(sectors=False, keywords=False, date_min=False, date_max=Fals
     date_max: Year ex. 2021
     
     """
-    
+    lob_lobbying = pd.read_csv('./Data/lob_lobbying_issues.csv')
+
     # if sector filter passed by user
-    if len(sectors) > 1:
-        lob_lobbying = pd.DataFrame(run_query("SELECT * FROM `open-secrets.open-secrets.lobbying` LIMIT 10"))
-    else:
-        lob_lobbying = pd.DataFrame(run_query("SELECT * FROM `open-secrets.open-secrets.lobbying` LIMIT 10"))
+    if sectors:
+        lob_lobbying = lob_lobbying[lob_lobbying['Sector'].isin(sectors)]
 
     lob_lobbying = lob_lobbying.loc[lob_lobbying['ind'] == 'y']
 

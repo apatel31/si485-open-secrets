@@ -60,7 +60,7 @@ with st.spinner('Wait for it...'):
         lob_df = filter_spending(sectors=industryOrTopic, keywords=None, date_min=dateRange[0], date_max=dateRange[1])
         graph_df = format_graph_data(lob_df, minAmount=dollarThreshold, commonBills=commonBills)
         # st.write(graph_df.to_string())
-        lobby_net = Network(height='1000px', width='100%', bgcolor='black', font_color='white')
+        lobby_net = Network(height='1000px', width='100%', bgcolor='white', font_color='black')
         G = nx.from_pandas_edgelist(graph_df, 'source', 'dest', 'weight')
         lobby_net.from_nx(G)
         # Generate network with specific layout settings
@@ -173,6 +173,7 @@ with st.spinner('Wait for it...'):
                 st.table(top_5_pagerank)
 
         df_final = reduce(lambda left,right: pd.merge(left,right,on='Org'), df_list)
+        print(df_final.head())
 
         if all(x in analysisTopics for x in ['PageRank','Degree Centrality']):
             plost.xy_hist(
