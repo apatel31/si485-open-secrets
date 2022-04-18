@@ -10,13 +10,9 @@ from io import StringIO
 import time
 
 from sqlalchemy import create_engine
+from google.oauth2 import service_account
+from google.cloud import bigquery
 
-USERNAME = 'apatel31'
-PG_STRING = 'postgresql://apatel31_demo_db_connection:3gjXR_RhCJXB3WHnriQ7qzLFqQD5C@db.bit.io?sslmode=prefer'
-
-
-# establish dropbox connection
-#dbx = dropbox.Dropbox('sl.BF3_ArVG9B5BJjsMdESYLtxs0mDWYFxG4metjhpjnArq4DFnkG966lMifPPNjKe2vC7oMchh2BpQsZSRgdoVZgt3u76oxvNNEdx6srzRYvTBoqVstTZtEdqZOAl-qETjy1TofCM')
 ##### Sector Options #######
 """['Agribusiness', 'Construction', 'Communic/Electronics', 'Defense',
        'Energy/Nat Resource', 'Finance/Insur/RealEst', 'Misc Business',
@@ -24,26 +20,22 @@ PG_STRING = 'postgresql://apatel31_demo_db_connection:3gjXR_RhCJXB3WHnriQ7qzLFqQ
        'Labor', 'Transportation', 'Unknown', 'Joint Candidate Cmtes',
        'Party Cmte', 'Candidate', 'Non-contribution']"""
 
-# helper function to read dropbox files
-# def stream_dropbox_file(path):
-#     _,res=dbx.files_download(path)
-#     with closing(res) as result:
-#         byte_data=result.content
-#         return io.BytesIO(byte_data)
 
-sql_lob_lobbying = f'''
-SELECT * FROM "{USERNAME}/OpenSecrets"."lob_lobbying";
-'''
-sql_lob_issue = f'''
-SELECT * FROM "{USERNAME}/OpenSecrets"."lob_issue";
-'''
-sql_crp = f'''
-SELECT * FROM "{USERNAME}/OpenSecrets"."crp_categories";
-'''
-sql_lob_bills = f'''
-SELECT * FROM "{USERNAME}/OpenSecrets"."lob_bills";
-'''
+# Create API client.
+credentials = service_account.Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"]
+)
+client = bigquery.Client(credentials=credentials)
 
+# Perform query.
+# Uses st.experimental_memo to only rerun when the query changes or after 10 min.
+@st.experimental_memo(ttl=600)
+def run_query(query):
+    query_job = client.query(query)
+    rows_raw = query_job.result()
+    # Convert to list of dicts. Required for st.experimental_memo to hash the return value.
+    rows = [dict(row) for row in rows_raw]
+    return rows
 
 @st.cache
 def filter_spending(sectors=False, keywords=False, date_min=False, date_max=False):
@@ -56,38 +48,14 @@ def filter_spending(sectors=False, keywords=False, date_min=False, date_max=Fals
     date_max: Year ex. 2021
     
     """
-    engine = create_engine(PG_STRING)
-    with engine.connect() as conn:
-        conn.execute("SET statement_timeout = 600000;")
-        lob_lobbying = pd.read_sql(sql_lob_lobbying, conn)
-        lob_issue = pd.read_sql(sql_lob_issue, conn)
-        industries = pd.read_sql(sql_crp, conn)
-        lob_bills = pd.read_sql(sql_lob_bills, conn)
-
-    # load lobbying transactions data
-    #lob_lobbying = pd.read_csv(stream_dropbox_file('/OpenSecretsData/lob_lobbying.txt'), names=['Uniqid', 'Registrant_raw','Registrant', 'Isfirm', 'Client_raw', 'Client', 'Ultorg', 'Amount', 'Catcode', 'Source', 'Self', 'IncludeNSFS', 'Use', 'Ind', 'Year', 'Type', 'Type_Long', 'Affiliate'], encoding='ISO-8859-1', low_memory=False)
-    # only use rows marked as use (maybe only ind for unique payments?)
-    lob_lobbying = lob_lobbying.loc[lob_lobbying['ind'] == 'y']
-    #, ['Uniqid', 'Registrant', 'Client', 'Ultorg', 'Amount', 'Catcode', 'Use', 'Ind', 'Year', 'Type']
-
-    # load issue data
-    #lob_issue = pd.read_csv(stream_dropbox_file('/OpenSecretsData/lob_issue.txt'), names=['SI_ID', 'Uniqid','IssueID', 'Issue','SpecificIssue', 'Year'], encoding='ISO-8859-1')
-    # drop issues without descriptions
-    #issue_notna = lob_issue.dropna(subset=["specificissue"]).copy()
-    # make lowercase for standard searching
-    #issue_notna.loc[:, 'specificissue'] = issue_notna['specificissue'].str.lower()
-    # join in issues
-
-    lob_lobbying = lob_lobbying.merge(lob_issue, 'left', on='uniqid').drop('year_y', axis=1).rename(columns={'year_x': 'year'})
     
     # if sector filter passed by user
-    if sectors:
-        # join in sector
-        #industries = pd.read_csv(stream_dropbox_file('/OpenSecretsData/CRP_Categories.txt'), sep='\t')
-        
-        lob_lobbying = lob_lobbying.merge(industries, 'left', on='catcode')
-        # include only selected sector
-        lob_lobbying = lob_lobbying.loc[lob_lobbying['sector'].isin(sectors)]
+    if len(sectors) > 1:
+        lob_lobbying = pd.DataFrame(run_query("SELECT * FROM `open-secrets.open-secrets.lobbying` LIMIT 10"))
+    else:
+        lob_lobbying = pd.DataFrame(run_query("SELECT * FROM `open-secrets.open-secrets.lobbying` LIMIT 10"))
+
+    lob_lobbying = lob_lobbying.loc[lob_lobbying['ind'] == 'y']
 
     # if date filter is passed by user
     if date_min:
@@ -102,10 +70,6 @@ def filter_spending(sectors=False, keywords=False, date_min=False, date_max=Fals
         lob_lobbying_notna = lob_lobbying.dropna(subset=['specificissue'])
         lob_lobbying = lob_lobbying_notna.loc[lob_lobbying_notna['specificissue'].str.contains(regex, regex=True)]
         
-    # load bills info data
-    #lob_bills = pd.read_csv(stream_dropbox_file('/OpenSecretsData/lob_bills.txt'), names=['B_ID', 'SI_ID','CongNo', 'Bill_Name'])
-    # join in bills
-    lob_lobbying  = pd.merge(lob_lobbying, lob_bills, on='si_id', how='left')
 
     return(lob_lobbying)
 
