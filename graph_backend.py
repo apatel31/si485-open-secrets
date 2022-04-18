@@ -5,9 +5,20 @@ import numpy as np
 from contextlib import closing # this will correctly close the request
 import io
 import streamlit as st
+
+#!/usr/bin/env python3
 import csv
 from io import StringIO
 import time
+
+import pandas as pd
+from sqlalchemy import create_engine
+
+USERNAME = 'apatel31_demo_db_connection'
+PG_STRING = 'postgresql://apatel31_demo_db_connection:3isXQ_rVv3fP9mkpugUUuXf3u7V7W@db.bit.io?sslmode=prefer'
+
+engine = create_engine(PG_STRING)
+
 
 # from sqlalchemy import create_engine
 # from google.oauth2 import service_account
@@ -48,11 +59,33 @@ def filter_spending(sectors=False, keywords=False, date_min=False, date_max=Fals
     date_max: Year ex. 2021
     
     """
-    lob_lobbying = pd.read_csv('./Data/lob_lobbying_issues.csv')
+    # lob_lobbying = pd.read_csv('./Data/lob_lobbying_issues.csv')
 
-    # if sector filter passed by user
-    if sectors:
-        lob_lobbying = lob_lobbying[lob_lobbying['Sector'].isin(sectors)]
+    # # if sector filter passed by user
+    # if sectors:
+    #     lob_lobbying = lob_lobbying[lob_lobbying['Sector'].isin(sectors)]
+
+    if len(sectors) > 1:
+        sectors_tup = "(\'" + "\',\'".join(sectors) + "\')"
+        query = f'''SELECT * FROM "apatel31/OpenSecrets"."master" WHERE sector IN {sectors_tup};'''
+
+        with engine.connect() as conn:
+                # Set 1 minute statement timeout (units are milliseconds)
+            conn.execute("SET statement_timeout = 600000;")
+            lob_lobbying = pd.read_sql(query, conn)
+        # cur.execute()
+        # pprint(cur.fetchone())
+    else:
+        sector = "\'" + sectors[0] + "\'"
+        query = f'''SELECT * FROM "apatel31/OpenSecrets"."master" WHERE sector={sector};'''
+
+        with engine.connect() as conn:
+            # Set 1 minute statement timeout (units are milliseconds)
+            conn.execute("SET statement_timeout = 600000;")
+            lob_lobbying = pd.read_sql(query, conn)
+        print(lob_lobbying.head())
+        # cur.execute()
+        # pprint(cur.fetchone())
 
     lob_lobbying = lob_lobbying.loc[lob_lobbying['ind'] == 'y']
 

@@ -10,3 +10,4 @@ psycopg2-binary==2.9.3
 google-cloud-bigquery==3.0.1
 google-auth==2.6.5
 pyvis==0.1.9
+bitdotio==1.0.10b1
