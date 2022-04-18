@@ -17,7 +17,7 @@ from sqlalchemy import create_engine
 USERNAME = 'apatel31_demo_db_connection'
 PG_STRING = 'postgresql://apatel31_demo_db_connection:3isXQ_rVv3fP9mkpugUUuXf3u7V7W@db.bit.io?sslmode=prefer'
 
-engine = create_engine(PG_STRING)
+engine = create_engine(PG_STRING, pool_pre_ping=True)
 
 
 # from sqlalchemy import create_engine
